@@ -82,9 +82,11 @@ let uiController =(function(){
         questionDeleteBtn        :document.getElementById('question-delete-btn'),
         questionClearBtn         :document.getElementById('questions-clear-btn'),
 
-    }
+    };
+
     return  {
       getDomItems: domItems,
+
       addInputDinamically:function(){
          let addInput = function(){
 
@@ -114,7 +116,7 @@ let uiController =(function(){
           }
       },
       editQuestions:function(event,storagedData){
-          let getId, myQuestionData,foundQuestion;
+          let getId, myQuestionData,foundQuestion,self = this;
            if('question-'.indexOf(event.target.id)){
               domItems.questionUpdateBtn.style.visibility ='visible';
               domItems.questionDeleteBtn.style.visibility ='visible';
@@ -136,28 +138,28 @@ let uiController =(function(){
              domItems.newQuestionText.value=foundQuestion.question;
              this.addInputDinamically();
 
-             function backToDefault(options){
+             function backToDefault(){
+                 let options = document.querySelectorAll('.admin-option');
                  domItems.questionUpdateBtn.style.visibility="hidden";
                  domItems.questionDeleteBtn.style.visibility="hidden";
                  domItems.questionInsertBtn.style.visibility="visible";
                  domItems.questionClearBtn.style.pointerEvents="";
 
                  domItems.newQuestionText.value="";
+
                  for(let i=0;i < options.length;i++){
                      options[i].value ="";
                      if(options[i].previousElementSibling.checked){
                          options[i].previousElementSibling.checked =false;
                      }
                  }
-                 console.log(domItems.adminOptions);
-                 for(let i =0 ; i < domItems.adminOptions.length;i++){
-                     domItems.adminOptions[i].value ="";
-                 }
+                 self.showQuestions(storagedData);
              }
 
              function updateFn(){
 
-                let updatedInputs=[],optionElements;
+                let updatedInputs=[],optionElements,questions;
+                questions =storagedData.getQuestionCollection();
                 optionElements = document.querySelectorAll('.admin-option');
                 foundQuestion.question= domItems.newQuestionText.value;
                 foundQuestion.correctAns ='';
@@ -175,11 +177,12 @@ let uiController =(function(){
                     if(updatedInputs.length > 1){
                         if(foundQuestion.correctAns !==""){
                             foundQuestion.answers= updatedInputs;
-                            console.log(foundQuestion);
-                            storagedData.getQuestionCollection().splice(getId,1,foundQuestion);
-                            storagedData.setQuestionCollection(storagedData.getQuestionCollection());
 
-                            backToDefault(optionElements);
+                            questions.splice(getId,1,foundQuestion);
+
+                            storagedData.setQuestionCollection(questions);
+
+                            backToDefault();
                         }else{
                             alert('you must chose correct Answer');
                         }
@@ -190,8 +193,17 @@ let uiController =(function(){
                     alert('Your Question can not be empty');
                 }
                }
+               function deleteFn(){
+
+                  let questions =storagedData.getQuestionCollection();
+                  questions.splice(getId,1);
+                  storagedData.setQuestionCollection(questions);
+                  backToDefault();
+
+               }
 
              domItems.questionUpdateBtn.onclick = updateFn;
+             domItems.questionDeleteBtn.onclick = deleteFn;
 
            };
       },
