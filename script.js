@@ -136,7 +136,27 @@ let uiController =(function(){
              domItems.newQuestionText.value=foundQuestion.question;
              this.addInputDinamically();
 
-             updateFn(){
+             function backToDefault(options){
+                 domItems.questionUpdateBtn.style.visibility="hidden";
+                 domItems.questionDeleteBtn.style.visibility="hidden";
+                 domItems.questionInsertBtn.style.visibility="visible";
+                 domItems.questionClearBtn.style.pointerEvents="";
+
+                 domItems.newQuestionText.value="";
+                 for(let i=0;i < options.length;i++){
+                     options[i].value ="";
+                     if(options[i].previousElementSibling.checked){
+                         options[i].previousElementSibling.checked =false;
+                     }
+                 }
+                 console.log(domItems.adminOptions);
+                 for(let i =0 ; i < domItems.adminOptions.length;i++){
+                     domItems.adminOptions[i].value ="";
+                 }
+             }
+
+             function updateFn(){
+
                 let updatedInputs=[],optionElements;
                 optionElements = document.querySelectorAll('.admin-option');
                 foundQuestion.question= domItems.newQuestionText.value;
@@ -155,8 +175,11 @@ let uiController =(function(){
                     if(updatedInputs.length > 1){
                         if(foundQuestion.correctAns !==""){
                             foundQuestion.answers= updatedInputs;
+                            console.log(foundQuestion);
                             storagedData.getQuestionCollection().splice(getId,1,foundQuestion);
-                            storagedData.set
+                            storagedData.setQuestionCollection(storagedData.getQuestionCollection());
+
+                            backToDefault(optionElements);
                         }else{
                             alert('you must chose correct Answer');
                         }
