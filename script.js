@@ -1,70 +1,85 @@
-
-let quizController =(function(){
-    function Question(id,question,answers,correctAns){
+let quizController;
+quizController = (function () {
+    function Question(id, question, answers, correctAns) {
         this.id = id;
         this.question = question;
         this.answers = answers;
         this.correctAns = correctAns;
     };
-    localStorageForQuestions={
-        setQuestionCollection: function(newQuestions){
-            localStorage.setItem('questionCollections',JSON.stringify(newQuestions));
+    let localStorageForQuestions = {
+        setQuestionCollection: function (newQuestions) {
+            localStorage.setItem('questionCollections', JSON.stringify(newQuestions));
         },
-        getQuestionCollection: function(){
+        getQuestionCollection: function () {
             return JSON.parse(localStorage.getItem('questionCollections'));
         },
-        removeQuestionCollection:function(){
+        removeQuestionCollection: function () {
             localStorage.removeItem('questionCollections');
         }
     };
-    if(localStorageForQuestions.getQuestionCollection() === null){
+
+    let quizIndex = {
+        index:0,
+    }
+
+    if (localStorageForQuestions.getQuestionCollection() === null) {
         localStorageForQuestions.setQuestionCollection([]);
-    };
+    }
+    ;
+
     return {
         questionsFromLocalStorage: localStorageForQuestions,
-        addQuestion: function(options,question){
-            let questionId , newQuestion,answers=[],correctAns,isChecked=false;
-            if(localStorageForQuestions.getQuestionCollection().length > 0){
-                questionId = localStorageForQuestions.getQuestionCollection()[localStorageForQuestions.getQuestionCollection().length-1].id +1;
-            }else{
-                questionId =0;
+        getQuizIndex: quizIndex,
+        addQuestion: function (options, question) {
+            let questionId, newQuestion, answers = [], correctAns, isChecked = false;
+            if (localStorageForQuestions.getQuestionCollection().length > 0) {
+                questionId = localStorageForQuestions.getQuestionCollection()[localStorageForQuestions.getQuestionCollection().length - 1].id + 1;
+            } else {
+                questionId = 0;
             }
-            for(let i =0 ; i < options.length;i++){
-                if(options[i].value !== ""){
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value !== "") {
                     answers.push(options[i].value);
-                    if(options[i].previousElementSibling.checked){
+                    if (options[i].previousElementSibling.checked) {
                         correctAns = options[i].value;
                         isChecked = true
                     }
                 }
 
             }
-            if(question.value !==""){
-                if(answers.length > 1){
-                   if(isChecked){
+            if (question.value !== "") {
+                if (answers.length > 1) {
+                    if (isChecked) {
 
-                       newQuestion = new Question(questionId,question.value,answers,correctAns);
+                        newQuestion = new Question(questionId, question.value, answers, correctAns);
 
-                       let storagedQuestions = localStorageForQuestions.getQuestionCollection();
-                       storagedQuestions.push(newQuestion);
-                       localStorageForQuestions.setQuestionCollection(storagedQuestions);
+                        let storagedQuestions = localStorageForQuestions.getQuestionCollection();
+                        storagedQuestions.push(newQuestion);
+                        localStorageForQuestions.setQuestionCollection(storagedQuestions);
 
-                       question.value="";
-                       isChecked = false;
-                       for(let i=0; i<options.length;i++){
-                           options[i].value='';
-                       }
+                        question.value = "";
+                        isChecked = false;
+                        for (let i = 0; i < options.length; i++) {
+                            options[i].value = '';
+                        }
 
 
-                   }else{
-                       alert('please Select a Correct answer');
-                   }
-                }else{
+                    } else {
+                        alert('please Select a Correct answer');
+                    }
+                } else {
                     alert('You must atleast two answer');
                 }
-            }else{
+            } else {
                 alert('Please enter your question!');
             }
+        },
+        correctAnswer:function(answerDom){
+           if(localStorageForQuestions.getQuestionCollection()[quizIndex.index].correctAns === answerDom.textContent){
+               return true;
+           } else{
+               return false;
+           }
         },
     };
 })();
@@ -81,6 +96,13 @@ let uiController =(function(){
         questionUpdateBtn        :document.getElementById('question-update-btn'),
         questionDeleteBtn        :document.getElementById('question-delete-btn'),
         questionClearBtn         :document.getElementById('questions-clear-btn'),
+
+        /*quiz section start*/
+        askedQuestionText        :document.getElementById('asked-question-text'),
+        instantAnswerContainer   :document.querySelector('.instant-answer-container'),
+        quizOptionsWrapper       :document.querySelector('.quiz-options-wrapper'),
+        progress                 :document.querySelector('progress'),
+        progressPara             :document.getElementById('progress'),
 
     };
 
@@ -207,6 +229,23 @@ let uiController =(function(){
 
            };
       },
+      showQuizDinamically: function(storagedData,quizIndex){
+          let quizData,innerHtml,characters;
+          characters=['A','B','C','D','E','F'];
+          quizData = storagedData.getQuestionCollection()[quizIndex.index];
+          domItems.askedQuestionText.textContent = quizData.question;
+          domItems.quizOptionsWrapper.innerHTML="";
+          for(let  i =0; i < quizData.answers.length; i++){
+              innerHtml =`<div class="choice-${i}"><span class="choice-${i}">${characters[i]}</span><p  class="choice-${i}">${quizData.answers[i]}</p></div>`;
+              domItems.quizOptionsWrapper.insertAdjacentHTML('beforeend',innerHtml);
+          }
+      },
+      displayProgressBAr : function(storaged,quizIndex){
+                 domItems.progress.max=storaged.getQuestionCollection().length;
+                 domItems.progress.value = quizIndex.index +1;
+
+                 domItems.progressPara.textContent = (quizIndex.index+1)+'/'+storaged.getQuestionCollection().length;
+          },
     };
 })();
 /*UIController ends*/
@@ -225,5 +264,18 @@ let controller =(function(quizCtrl,UICtrl){
    selectedDomItems.insertedQuestionsWrapper.addEventListener('click',function(e){
        UICtrl.editQuestions(e,quizCtrl.questionsFromLocalStorage);
    });
+   /*quiz section*/
+    UICtrl.showQuizDinamically(quizCtrl.questionsFromLocalStorage,quizCtrl.getQuizIndex);
+    UICtrl.displayProgressBAr(quizCtrl.questionsFromLocalStorage,quizCtrl.getQuizIndex);
+    selectedDomItems.quizOptionsWrapper.addEventListener('click',function(e){
+        let divs,answer;
+        divs = document.querySelectorAll('.quiz-options-wrapper div');
+        for(let i =0;i < divs.length;i++){
+            if(e.target.className === 'choice-'+i){
+               answer = document.querySelector('.quiz-options-wrapper div p.'+e.target.className);
+               console.log(quizCtrl.correctAnswer(answer));
+            }
+        }
+    });
 })(quizController,uiController);
 /*Controller end*/
