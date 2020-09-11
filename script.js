@@ -81,6 +81,9 @@ quizController = (function () {
                return false;
            }
         },
+        isFinished:function(){
+           return  quizIndex.index +1 === localStorageForQuestions.getQuestionCollection().length;
+        }
     };
 })();
 
@@ -103,6 +106,11 @@ let uiController =(function(){
         quizOptionsWrapper       :document.querySelector('.quiz-options-wrapper'),
         progress                 :document.querySelector('progress'),
         progressPara             :document.getElementById('progress'),
+        instantAnswerContainer   :document.querySelector('.instant-answer-container'),
+        instantAnswerWrapper     :document.getElementById('instant-answer-wrapper'),
+        image                    :document.querySelector('.instant-answer-container img'),
+        instantAnsText           :document.getElementById('instant-answer-text'),
+        nextQuestionBtn          :document.getElementById('next-question-btn'),
 
     };
 
@@ -246,6 +254,28 @@ let uiController =(function(){
 
                  domItems.progressPara.textContent = (quizIndex.index+1)+'/'+storaged.getQuestionCollection().length;
           },
+      newDesign:function(answerResult,selectedanswer){
+         let index=0,instantAnsDAta;
+         if(answerResult){
+             index=1;
+         }
+         instantAnsDAta={
+             text:['This is wrong answer','This is correct answer'],
+             src :["images/sad.png","images/happy.png"],
+             bg  :['red','green'],
+             spanbg:['rgba(200,0,0,0.7)','rgba(0,250,0,0.7)']
+         };
+         domItems.instantAnswerContainer.style.cssText="opacity:1;";
+         domItems.image.setAttribute('src',instantAnsDAta.src[index]);
+         domItems.instantAnsText.textContent =instantAnsDAta.text[index];
+         domItems.quizOptionsWrapper.style.cssText ="pointer-events:none;opacity:0.6";
+         domItems.instantAnswerWrapper.style.backgroundColor=instantAnsDAta.bg[index];
+         selectedanswer.previousElementSibling.style.backgroundColor=instantAnsDAta.spanbg[index];
+      },
+      resetDesign:function(){
+          domItems.instantAnswerContainer.style.opacity =0;
+          domItems.quizOptionsWrapper.style.cssText = "";
+      }
     };
 })();
 /*UIController ends*/
@@ -273,7 +303,24 @@ let controller =(function(quizCtrl,UICtrl){
         for(let i =0;i < divs.length;i++){
             if(e.target.className === 'choice-'+i){
                answer = document.querySelector('.quiz-options-wrapper div p.'+e.target.className);
-               console.log(quizCtrl.correctAnswer(answer));
+               let boolean=quizCtrl.correctAnswer(answer);
+               UICtrl.newDesign(boolean,answer);
+               if(quizCtrl.isFinished()){
+                   selectedDomItems.nextQuestionBtn.textContent ="finished";
+                   selectedDomItems.nextQuestionBtn.style.pointerEvents ="none";
+
+               }
+               selectedDomItems.nextQuestionBtn.addEventListener('click',function(){
+                    if(quizCtrl.isFinished()){
+
+                    }else{
+                        UICtrl.resetDesign();
+                        quizCtrl.getQuizIndex.index++;
+                        UICtrl.showQuizDinamically(quizCtrl.questionsFromLocalStorage,quizCtrl.getQuizIndex);
+                        UICtrl.displayProgressBAr(quizCtrl.questionsFromLocalStorage,quizCtrl.getQuizIndex);
+                    }
+               });
+
             }
         }
     });
